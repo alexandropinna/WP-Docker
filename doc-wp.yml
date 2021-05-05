@@ -19,6 +19,11 @@ services:
       PMA_ARBITRARY: 1
     restart: always
     env_file: .env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 100M    
     networks:
       - traefik_net
     labels:
@@ -48,6 +53,11 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: always
     env_file: .env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 200M    
     links:
       - mysql
     environment:
@@ -80,6 +90,11 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: always
     env_file: .env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 200M     
     links:
       - mysql
     environment:
@@ -114,6 +129,11 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: always
     env_file: .env
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 500M     
     environment:
       MYSQL_ROOT_PASSWORD: "t2HcYZv2R9e!6SyE"
       MYSQL_DATABASE: wordpress
