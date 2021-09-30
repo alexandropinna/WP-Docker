@@ -33,7 +33,6 @@ services:
       - traefik_net
     labels:
       - "traefik.http.routers.${NAME}-wp.rule=Host(`${DOMAIN}`, `www.${DOMAIN}`)"
-      - "traefik.http.routers.${NAME}.middlewares=${NAME}-redirect"
       - "traefik.http.routers.${NAME}-wp.service=wp-${NAME}@docker"
       - "traefik.http.routers.${NAME}-wp.entrypoints=https"
       - "traefik.http.routers.${NAME}-wp.tls.certresolver=mydnschallenge"
