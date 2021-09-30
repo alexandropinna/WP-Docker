@@ -21,7 +21,7 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 200M    
+          memory: 500M    
     links:
       - mysql
     environment:
