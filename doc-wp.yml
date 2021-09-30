@@ -2,42 +2,6 @@ version: '3'
 
 services:
 
-#################### PHPMYADMIN ####################
-
-  phpmyadmin:
-    image: phpmyadmin:5.0.4-apache
-    container_name: phpmyadmin-${NAME}
-    volumes:
-      - ${RUTA}/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-    links:
-      - mysql
-    environment:
-      PMA_HOST: ${NAME}-db
-      PMA_PORT: 3306
-      PMA_ARBITRARY: 1
-    restart: always
-    env_file: .env
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 100M    
-    networks:
-      - traefik_net
-    labels:
-      - "traefik.http.routers.phpmyadmin-${NAME}.rule=Host(`phpmyadmin.${DOMAIN}`)"
-      - "traefik.http.routers.phpmyadmin-${NAME}.service=phpmyadmin-${NAME}@docker"
-      - "traefik.http.routers.phpmyadmin-${NAME}.entrypoints=https"
-      - "traefik.http.routers.phpmyadmin-${NAME}.tls.certresolver=mydnschallenge"
-      - "traefik.http.routers.phpmyadmin-${NAME}.tls=true"
-      - "traefik.http.middlewares.phpmyadmin-${NAME}.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.phpmyadmin-${NAME}.redirectscheme.permanent=true"
-
-#################### FIN PHPMYADMIN ####################
-
-
 #################### WORDPRESS ####################
 
   wp:
@@ -61,14 +25,15 @@ services:
     links:
       - mysql
     environment:
-      WORDPRESS_DB_HOST: ${NAME}-db:3306
+      WORDPRESS_DB_HOST: ${NAME}-mysql:3306
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DB_USER: wpuser-${NAME}
-      WORDPRESS_DB_PASSWORD: "*K3hdrGZCu5EXhy2"
+      WORDPRESS_DB_PASSWORD: ""
     networks:
       - traefik_net
     labels:
-      - "traefik.http.routers.${NAME}-wp.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${NAME}-wp.rule=Host(`${DOMAIN}`, `www.${DOMAIN}`)"
+      - "traefik.http.routers.${NAME}.middlewares=${NAME}-redirect"
       - "traefik.http.routers.${NAME}-wp.service=wp-${NAME}@docker"
       - "traefik.http.routers.${NAME}-wp.entrypoints=https"
       - "traefik.http.routers.${NAME}-wp.tls.certresolver=mydnschallenge"
@@ -76,44 +41,8 @@ services:
       - "traefik.http.middlewares.${NAME}-wp.redirectscheme.scheme=https"
       - "traefik.http.middlewares.${NAME}-wp.redirectscheme.permanent=true"
       - "traefik.http.middlewares.${NAME}-wp.redirectscheme.port=443"
-
-  www-wp:
-    depends_on:
-      - mysql
-    image: wordpress:php7.4-apache
-    container_name: www-${NAME}-wp
-    volumes:
-      - ${RUTA}/${NAME}-wp:/var/www/html
-      - ${RUTA}/etcwp:/etc/wordpress
-      - ${RUTA}/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-    restart: always
-    env_file: .env
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 200M     
-    links:
-      - mysql
-    environment:
-      WORDPRESS_DB_HOST: ${NAME}-db:3306
-      WORDPRESS_DB_NAME: wordpress
-      WORDPRESS_DB_USER: wpuser-${NAME}
-      WORDPRESS_DB_PASSWORD: "*K3hdrGZCu5EXhy2"
-    networks:
-      - traefik_net
-    labels:
-      - "traefik.http.routers.www-${NAME}-wp.rule=Host(`www.${DOMAIN}`)"
-      - "traefik.http.routers.www-${NAME}-wp.service=www-wp-${NAME}@docker"
-      - "traefik.http.routers.www-${NAME}-wp.entrypoints=https"
-      - "traefik.http.routers.www-${NAME}-wp.tls.certresolver=mydnschallenge"
-      - "traefik.http.routers.www-${NAME}-wp.tls=true"
-      - "traefik.http.middlewares.www-${NAME}-wp.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.www-${NAME}-wp.redirectscheme.permanent=true"
-      - "traefik.http.middlewares.www-${NAME}-wp.redirectscheme.port=443"
-
+      - "traefik.http.middlewares.${NAME}-redirect.headers.SSLForceHost=true"
+      - "traefik.http.middlewares.${NAME}-redirect.headers.SSLHost=${DOMAIN}"      
 
 #################### FIN WORDPRESS ####################
 
@@ -122,9 +51,9 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: ${NAME}-db
+    container_name: ${NAME}-mysql
     volumes:
-      - ${RUTA}/${NAME}-db:/var/lib/mysql
+      - ${RUTA}/${NAME}-mysql:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: always
@@ -135,10 +64,10 @@ services:
           cpus: '0.50'
           memory: 500M     
     environment:
-      MYSQL_ROOT_PASSWORD: "t2HcYZv2R9e!6SyE"
+      MYSQL_ROOT_PASSWORD: ""
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wpuser-${NAME}
-      MYSQL_PASSWORD: "*K3hdrGZCu5EXhy2"
+      MYSQL_PASSWORD: ""
     networks:
       - traefik_net
     labels:
